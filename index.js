@@ -7,6 +7,18 @@ import { join } from 'node:path'
 export const name = 'token-watch'
 export function apply(ctx, cfg) {
   const h = ctx.h
+  cfg = Object.assign({
+    heavyModels: [],
+    lightModels: [],
+    priceHeavyInputMiss: 0.014,
+    priceHeavyInputHit: 0.0014,
+    priceHeavyOutput: 0.014,
+    priceLightInputMiss: 0.007,
+    priceLightInputHit: 0.0007,
+    priceLightOutput: 0.007,
+    enableAutoRoute: true,
+    lightKeywords: ['教程','步骤','git','部署','解释','查一下','怎么配置','报错','命令']
+  }, cfg || {})
   const dataDir = join(homedir(), '.token-watch')
 const dataPath = join(dataDir, 'data.json')
   let persist = {
