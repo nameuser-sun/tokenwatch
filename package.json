@@ -1,19 +1,10 @@
 {
   "name": "token-watch",
   "version": "1.7.1",
-  "description": "通用Token监控 | 持久化热力日历 | GLM/DeepSeek/Kimi/Claude/GPT一键预设 | 自定义模型自动分流",
+  "description": "...",
   "type": "module",
   "main": "index.js",
-  "files": [
-    "index.js",
-    "cordis.patch.yml"
-  ],
-  "dsh": {
-    "bundle": {
-      "patch": [
-        "cordis.patch.yml"
-      ]
-    }
-  },
+  "files": ["index.js", "cordis.patch.yml"],
+  "dsh": { "bundle": { "patch": ["cordis.patch.yml"] } },
   "license": "MIT"
 }
