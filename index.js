@@ -1,40 +1,48 @@
 // TokenWatch - DSH Token统计插件 v1.7.1 (纯JS版)
 // 功能：状态栏计费 / 缓存命中率 / GitHub风格热力日历(持久化) / 一键预设(GLM/DeepSeek/Kimi/Claude/GPT) / 自定义模型自动分流
 
-import { createRequire } from 'node:module'
 import { promises as fs } from 'node:fs'
 import { join } from 'node:path'
 
-const require = createRequire(import.meta.url)
-
 let cordis = null
 
-// 1) 优先尝试 CommonJS require（DSH 最常用的注入方式）
+// 1. 尝试从全局的 CommonJS require 拿（DSH 最常见）
 try {
-  cordis = require('cordis')
-} catch (e) {}
+  const r = (typeof require === 'function' ? require : globalThis.require || global.require)
+  if (r && typeof r === 'function') {
+    try { cordis = r('cordis') } catch {}
+    try { if (!cordis) cordis = r('@cordisjs/core') } catch {}
+  }
+} catch {}
 
-// // 2) 如果上面没找到，再尝试从全局查找（极少数版本用）
+// 2. 尝试挂在 global/globalThis 上的注入
 if (!cordis) {
   const g = globalThis
-  cordis = g.cordis || g.Cordis || g.__CORDIS__ || g.$cordis
+  cordis = g.cordis || g.Cordis || g.__CORDIS__ || g.$cordis || g.__DSH_CORDIS__
+}
+if (!cordis) {
+  try { cordis = global.cordis || global.Cordis } catch {}
 }
 
-// 3) 最后尝试从 require.cache 里翻找（兜底）
+// 3. 暴力遍历 require.cache，直接从已加载的模块里抓
 if (!cordis) {
   try {
-    const cache = require.cache
-    for (const key of Object.keys(cache)) {
-      if (key.includes('cordis')) {
-        cordis = cache[key].exports
-        break
+    const r = (typeof require === 'function' ? require : globalThis.require || global.require)
+    const cache = r?.cache || (globalThis.require && globalThis.require.cache) || (global.require && global.require.cache)
+    if (cache) {
+      for (const key of Object.keys(cache)) {
+        const exp = cache[key]?.exports
+        if (exp && exp.Schema && exp.h) {
+          cordis = exp
+          break
+        }
       }
     }
-  } catch (e) {}
+  } catch {}
 }
 
 if (!cordis || !cordis.Schema || !cordis.h) {
-  throw new Error('[token-watch] 未找到宿主注入的 cordis。请确认在 DeepSeek DSH 环境下运行，且已按说明去除 package.json 中的 cordis 依赖。')
+  throw new Error('[token-watch] 未找到宿主注入的 cordis。请确认在 DeepSeek DSH 环境下运行，且已去除 package.json 中的 cordis 依赖')
 }
 
 const { Schema, h } = cordis
