@@ -4,70 +4,23 @@
 import { promises as fs } from 'node:fs'
 import { join } from 'node:path'
 
-let cordis = null
-
-// 1. 尝试从全局的 CommonJS require 拿（DSH 最常见）
-try {
-  const r = (typeof require === 'function' ? require : globalThis.require || global.require)
-  if (r && typeof r === 'function') {
-    try { cordis = r('cordis') } catch {}
-    try { if (!cordis) cordis = r('@cordisjs/core') } catch {}
-  }
-} catch {}
-
-// 2. 尝试挂在 global/globalThis 上的注入
-if (!cordis) {
-  const g = globalThis
-  cordis = g.cordis || g.Cordis || g.__CORDIS__ || g.$cordis || g.__DSH_CORDIS__
-}
-if (!cordis) {
-  try { cordis = global.cordis || global.Cordis } catch {}
-}
-
-// 3. 暴力遍历 require.cache，直接从已加载的模块里抓
-if (!cordis) {
-  try {
-    const r = (typeof require === 'function' ? require : globalThis.require || global.require)
-    const cache = r?.cache || (globalThis.require && globalThis.require.cache) || (global.require && global.require.cache)
-    if (cache) {
-      for (const key of Object.keys(cache)) {
-        const exp = cache[key]?.exports
-        if (exp && exp.Schema && exp.h) {
-          cordis = exp
-          break
-        }
-      }
-    }
-  } catch {}
-}
-
-if (!cordis || !cordis.Schema || !cordis.h) {
-  throw new Error('[token-watch] 未找到宿主注入的 cordis。请确认在 DeepSeek DSH 环境下运行，且已去除 package.json 中的 cordis 依赖')
-}
-
-const { Schema, h } = cordis
-
 export const name = 'token-watch'
-export const Config = Schema.object({
-  heavyModels: Schema.array(String)
-    .description('高性能/高价模型组（复杂任务用，会被自动分流）')
-    .default([]),
-  lightModels: Schema.array(String)
-    .description('经济型模型组（简单任务目标）')
-    .default([]),
-  priceHeavyInputMiss: Schema.number().default(0.014).description("高价组 未命中输入单价 / 百万token"),
-  priceHeavyInputHit: Schema.number().default(0.0014).description("高价组 缓存命中输入单价 / 百万token"),
-  priceHeavyOutput: Schema.number().default(0.014).description("高价组 输出单价 / 百万token"),
-  priceLightInputMiss: Schema.number().default(0.007).description("经济组 未命中输入单价 / 百万token"),
-  priceLightInputHit: Schema.number().default(0.0007).description("经济组 缓存命中输入单价 / 百万token"),
-  priceLightOutput: Schema.number().default(0.007).description("经济组 输出单价 / 百万token"),
-  enableAutoRoute: Schema.boolean().default(true).description("开启自动轻任务分流"),
-  lightKeywords: Schema.array(String)
-    .default(['教程','步骤','git','部署','解释','查一下','怎么配置','报错','命令'])
-    .description("触发分流的关键词，小写匹配")
-})
 
+// 桌面端 DSH 不走 cordis.Schema，直接用纯对象即可
+export const Config = {
+  heavyModels: { type: 'array', items: { type: 'string' }, default: [], description: '高性能/高价模型组（复杂任务用，会被自动分流）' },
+  lightModels: { type: 'array', items: { type: 'string' }, default: [], description: '经济型模型组（简单任务目标）' },
+  priceHeavyInputMiss: { type: 'number', default: 0.014, description: '高价组 未命中输入单价 / 百万token' },
+  priceHeavyInputHit: { type: 'number', default: 0.0014, description: '高价组 缓存命中输入单价 / 百万token' },
+  priceHeavyOutput: { type: 'number', default: 0.014, description: '高价组 输出单价 / 百万token' },
+  priceLightInputMiss: { type: 'number', default: 0.007, description: '经济组 未命中输入单价 / 百万token' },
+  priceLightInputHit: { type: 'number', default: 0.0007, description: '经济组 缓存命中输入单价 / 百万token' },
+  priceLightOutput: { type: 'number', default: 0.007, description: '经济组 输出单价 / 百万token' },
+  enableAutoRoute: { type: 'boolean', default: true, description: '开启自动轻任务分流' },
+  lightKeywords: { type: 'array', items: { type: 'string' }, default: ['教程','步骤','git','部署','解释','查一下','怎么配置','报错','命令'], description: '触发分流的关键词，小写匹配' }
+}
 export function apply(ctx, cfg) {
+  const h = ctx.h
   const dataDir = join(homedir(), '.token-watch')
 const dataPath = join(dataDir, 'data.json')
   let persist = {
