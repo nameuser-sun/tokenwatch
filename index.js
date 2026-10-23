@@ -1,15 +1,43 @@
 // TokenWatch - DSH Token统计插件 v1.7.1 (纯JS版)
 // 功能：状态栏计费 / 缓存命中率 / GitHub风格热力日历(持久化) / 一键预设(GLM/DeepSeek/Kimi/Claude/GPT) / 自定义模型自动分流
 
-const cordis = globalThis.cordis || globalThis.Cordis || globalThis.__CORDIS__
+import { createRequire } from 'node:module'
+import { promises as fs } from 'node:fs'
+import { join } from 'node:path'
+
+const require = createRequire(import.meta.url)
+
+let cordis = null
+
+// 1) 优先尝试 CommonJS require（DSH 最常用的注入方式）
+try {
+  cordis = require('cordis')
+} catch (e) {}
+
+// // 2) 如果上面没找到，再尝试从全局查找（极少数版本用）
+if (!cordis) {
+  const g = globalThis
+  cordis = g.cordis || g.Cordis || g.__CORDIS__ || g.$cordis
+}
+
+// 3) 最后尝试从 require.cache 里翻找（兜底）
+if (!cordis) {
+  try {
+    const cache = require.cache
+    for (const key of Object.keys(cache)) {
+      if (key.includes('cordis')) {
+        cordis = cache[key].exports
+        break
+      }
+    }
+  } catch (e) {}
+}
+
 if (!cordis || !cordis.Schema || !cordis.h) {
-  throw new Error('[token-watch] 未找到宿主注入的 cordis，请确认在 DSH 环境下运行')
+  throw new Error('[token-watch] 未找到宿主注入的 cordis。请确认在 DeepSeek DSH 环境下运行，且已按说明去除 package.json 中的 cordis 依赖。')
 }
 
 const { Schema, h } = cordis
-
-import { promises as fs } from 'node:fs'
-import { join } from 'node:path'
 
 export const name = 'token-watch'
 export const Config = Schema.object({
