@@ -1,6 +1,7 @@
 // TokenWatch - DSH Token统计插件 v1.7.0 (纯JS版)
 // 功能：状态栏计费 / 缓存命中率 / GitHub风格热力日历(持久化) / 一键预设(GLM/DeepSeek/Kimi/Claude/GPT) / 自定义模型自动分流
-import { Context, Schema, h } from 'cordis'
+import { Context, Schema } from 'cordis'
+import { h } from 'vue'
 import { promises as fs } from 'node:fs'
 import { join } from 'node:path'
 
