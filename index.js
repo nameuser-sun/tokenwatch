@@ -1,23 +1,12 @@
 // TokenWatch - DSH Token统计插件 v1.7.1 (纯JS版)
 // 功能：状态栏计费 / 缓存命中率 / GitHub风格热力日历(持久化) / 一键预设(GLM/DeepSeek/Kimi/Claude/GPT) / 自定义模型自动分流
 
-let Context, Schema, h
-try {
-  const cordis = await import('cordis')
-  Context = cordis.Context
-  Schema = cordis.Schema
-  h = cordis.h
-} catch (e) {
-  const g = globalThis
-  const cordis = g.cordis || g.Cordis || g.__CORDIS__ || {}
-  Context = cordis.Context
-  Schema = cordis.Schema
-  h = cordis.h
+const cordis = globalThis.cordis || globalThis.Cordis || globalThis.__CORDIS__
+if (!cordis || !cordis.Schema || !cordis.h) {
+  throw new Error('[token-watch] 未找到宿主注入的 cordis，请确认在 DSH 环境下运行')
 }
 
-if (!Schema || !h) {
-  throw new Error('[token-watch] 无法加载 cordis。请确认这是在 DSH 环境中运行，且宿主已注入 cordis。')
-}
+const { Schema, h } = cordis
 
 import { promises as fs } from 'node:fs'
 import { join } from 'node:path'
