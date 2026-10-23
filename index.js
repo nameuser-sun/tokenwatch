@@ -5,20 +5,6 @@ import { promises as fs } from 'node:fs'
 import { join } from 'node:path'
 
 export const name = 'token-watch'
-
-// 桌面端 DSH 不走 cordis.Schema，直接用纯对象即可
-export const Config = {
-  heavyModels: { type: 'array', items: { type: 'string' }, default: [], description: '高性能/高价模型组（复杂任务用，会被自动分流）' },
-  lightModels: { type: 'array', items: { type: 'string' }, default: [], description: '经济型模型组（简单任务目标）' },
-  priceHeavyInputMiss: { type: 'number', default: 0.014, description: '高价组 未命中输入单价 / 百万token' },
-  priceHeavyInputHit: { type: 'number', default: 0.0014, description: '高价组 缓存命中输入单价 / 百万token' },
-  priceHeavyOutput: { type: 'number', default: 0.014, description: '高价组 输出单价 / 百万token' },
-  priceLightInputMiss: { type: 'number', default: 0.007, description: '经济组 未命中输入单价 / 百万token' },
-  priceLightInputHit: { type: 'number', default: 0.0007, description: '经济组 缓存命中输入单价 / 百万token' },
-  priceLightOutput: { type: 'number', default: 0.007, description: '经济组 输出单价 / 百万token' },
-  enableAutoRoute: { type: 'boolean', default: true, description: '开启自动轻任务分流' },
-  lightKeywords: { type: 'array', items: { type: 'string' }, default: ['教程','步骤','git','部署','解释','查一下','怎么配置','报错','命令'], description: '触发分流的关键词，小写匹配' }
-}
 export function apply(ctx, cfg) {
   const h = ctx.h
   const dataDir = join(homedir(), '.token-watch')
