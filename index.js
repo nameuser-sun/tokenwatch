@@ -4,6 +4,7 @@ import { Context, Schema } from 'cordis'
 import { h } from 'vue'
 import { promises as fs } from 'node:fs'
 import { join } from 'node:path'
+import { homedir } from 'node:os'
 
 export const name = 'token-watch'
 export const Config = Schema.object({
@@ -26,7 +27,8 @@ export const Config = Schema.object({
 })
 
 export function apply(ctx, cfg) {
-  const dataPath = join(ctx.baseDir, 'data.json')
+  const dataDir = join(homedir(), '.token-watch')
+const dataPath = join(dataDir, 'data.json')
   let persist = {
     dailyUsage: {},
     sessions: {}
@@ -42,10 +44,10 @@ export function apply(ctx, cfg) {
       persist = { dailyUsage: {}, sessions: {} }
     }
   }
-  async function saveData() {
-    await fs.writeFile(dataPath, JSON.stringify(persist, null, 2), 'utf8')
-  }
-
+ async function saveData() {
+  await fs.mkdir(dataDir, { recursive: true })
+  await fs.writeFile(dataPath, JSON.stringify(persist, null, 2), 'utf8')
+}
   const sessionMap = new Map()
   loadData().then(() => {
     for (const [sid, stat] of Object.entries(persist.sessions)) {
