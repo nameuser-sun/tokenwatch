@@ -1,12 +1,4 @@
-// TokenWatch - DSH Token统计插件 v1.7.1 (纯JS版)
-// 功能：状态栏计费 / 缓存命中率 / GitHub风格热力日历(持久化) / 一键预设(GLM/DeepSeek/Kimi/Claude/GPT) / 自定义模型自动分流
-
-import { promises as fs } from 'node:fs'
-import { join } from 'node:path'
-
-export const name = 'token-watch'
 export function apply(ctx, cfg) {
-  const h = ctx.h
   cfg = Object.assign({
     heavyModels: [],
     lightModels: [],
@@ -19,6 +11,8 @@ export function apply(ctx, cfg) {
     enableAutoRoute: true,
     lightKeywords: ['教程','步骤','git','部署','解释','查一下','怎么配置','报错','命令']
   }, cfg || {})
+
+  const h = (...args) => ctx.h(...args)
   const dataDir = join(homedir(), '.token-watch')
 const dataPath = join(dataDir, 'data.json')
   let persist = {
